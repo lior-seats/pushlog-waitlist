@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PushLog — Your Changelog Writes Itself</title>
+  <meta name="description" content="Connect GitHub, merge a PR, and PushLog automatically drafts a beautiful changelog entry from your commits. Ship faster, communicate better, stop losing users to silence." />
+  <link rel="canonical" href="https://lior-seats.github.io/pushlog-waitlist/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://lior-seats.github.io/pushlog-waitlist/" />
+  <meta property="og:title" content="PushLog — Your Changelog Writes Itself" />
+  <meta property="og:description" content="Connect GitHub, merge a PR, and PushLog automatically drafts a beautiful changelog entry. Ship faster, stop losing users to silence." />
+  <meta property="og:image" content="https://lior-seats.github.io/pushlog-waitlist/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="PushLog — Your Changelog Writes Itself" />
+  <meta name="twitter:description" content="Connect GitHub, merge a PR, get a beautiful AI-drafted changelog entry. $19/month." />
+  <meta name="twitter:image" content="https://lior-seats.github.io/pushlog-waitlist/og-image.png" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg:      #0a0c10;
+      --surface: #101318;
+      --surface2:#161b23;
+      --border:  #1e2533;
+      --accent:  #16a34a;
+      --accent-h:#22c55e;
+      --text:    #e2e8f0;
+      --muted:   #8892a4;
+      --radius:  10px;
+    }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-size: 16px; line-height: 1.6; }
+
+    /* NAV */
+    nav { display:flex; align-items:center; justify-content:space-between; padding:18px 40px; border-bottom:1px solid var(--border); position:sticky; top:0; background:rgba(10,12,16,0.92); backdrop-filter:blur(12px); z-index:100; }
+    .logo { display:flex; align-items:center; gap:10px; font-size:1.1rem; font-weight:700; color:var(--text); text-decoration:none; }
+    .logo-icon { width:30px; height:30px; background:linear-gradient(135deg,var(--accent),var(--accent-h)); border-radius:8px; display:flex; align-items:center; justify-content:center; }
+    .nav-cta { background:var(--accent); color:#fff; border:none; border-radius:7px; padding:8px 18px; font-size:0.9rem; font-weight:600; cursor:pointer; text-decoration:none; transition:background 0.15s; }
+    .nav-cta:hover { background:var(--accent-h); }
+
+    /* HERO */
+    .hero { max-width:760px; margin:0 auto; padding:90px 24px 60px; text-align:center; }
+    .hero-badge { display:inline-flex; align-items:center; gap:6px; background:rgba(22,163,74,0.12); border:1px solid rgba(22,163,74,0.3); color:var(--accent-h); border-radius:20px; padding:5px 14px; font-size:0.8rem; font-weight:600; letter-spacing:0.03em; text-transform:uppercase; margin-bottom:28px; }
+    h1 { font-size:clamp(2rem,5vw,3.1rem); font-weight:800; line-height:1.15; letter-spacing:-0.02em; margin-bottom:20px; }
+    .accent-text { color:var(--accent-h); }
+    .hero-sub { font-size:1.1rem; color:var(--muted); max-width:540px; margin:0 auto 36px; line-height:1.7; }
+
+    /* FORMS */
+    .hero-form, .waitlist-form { display:flex; gap:10px; max-width:460px; margin:0 auto 12px; flex-wrap:wrap; justify-content:center; }
+    .hero-form input[type="email"], .waitlist-form input[type="email"] { flex:1; min-width:220px; padding:13px 16px; border:1px solid var(--border); border-radius:var(--radius); background:var(--surface); color:var(--text); font-size:0.95rem; outline:none; transition:border-color 0.15s; }
+    .hero-form input[type="email"]:focus, .waitlist-form input[type="email"]:focus { border-color:var(--accent); }
+    .hero-form input::placeholder, .waitlist-form input::placeholder { color:var(--muted); }
+    .hero-form button, .waitlist-form button { padding:13px 24px; background:var(--accent); color:#fff; border:none; border-radius:var(--radius); font-size:0.95rem; font-weight:700; cursor:pointer; transition:background 0.15s; white-space:nowrap; }
+    .hero-form button:hover, .waitlist-form button:hover { background:var(--accent-h); }
+    .hero-form button:disabled, .waitlist-form button:disabled { opacity:0.6; cursor:not-allowed; }
+    .form-note { font-size:0.78rem; color:var(--muted); }
+    .thank-you { display:none; align-items:center; gap:8px; justify-content:center; color:var(--accent-h); font-weight:600; font-size:1rem; margin-top:12px; }
+
+    /* BEFORE/AFTER MOCKUP */
+    .ba-grid { display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-top:60px; max-width:680px; margin-left:auto; margin-right:auto; }
+    .ba-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px; text-align:left; }
+    .ba-label { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; margin-bottom:14px; }
+    .ba-label.before { color:#ef4444; }
+    .ba-label.after { color:var(--accent-h); }
+    .changelog-empty { color:var(--muted); font-size:0.85rem; line-height:1.6; font-style:italic; padding:16px 0; }
+    .changelog-entry { margin-bottom:14px; }
+    .entry-version { font-size:0.75rem; font-weight:700; color:var(--accent-h); margin-bottom:4px; }
+    .entry-date { font-size:0.72rem; color:var(--muted); margin-bottom:8px; }
+    .entry-item { display:flex; gap:7px; font-size:0.82rem; margin-bottom:4px; }
+    .entry-tag { font-size:0.68rem; font-weight:700; padding:1px 6px; border-radius:4px; flex-shrink:0; margin-top:1px; }
+    .tag-new { background:rgba(22,163,74,0.15); color:var(--accent-h); }
+    .tag-fix { background:rgba(245,158,11,0.15); color:#f59e0b; }
+    .tag-imp { background:rgba(99,102,241,0.15); color:#818cf8; }
+
+    /* PROVIDERS STRIP */
+    .providers-strip { text-align:center; padding:40px 24px 0; }
+    .providers-strip p { font-size:0.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:14px; }
+    .provider-pills { display:flex; flex-wrap:wrap; justify-content:center; gap:8px; }
+    .pill { display:inline-flex; align-items:center; gap:6px; background:var(--surface2); border:1px solid var(--border); border-radius:20px; padding:5px 14px; font-size:0.8rem; font-weight:500; color:var(--muted); }
+    .pill-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:0.7; }
+
+    /* SECTIONS */
+    section { max-width:900px; margin:0 auto; padding:80px 24px; }
+    .section-label { font-size:0.78rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--accent-h); margin-bottom:12px; }
+    .section-heading { font-size:clamp(1.6rem,3.5vw,2.3rem); font-weight:800; line-height:1.2; letter-spacing:-0.02em; margin-bottom:14px; }
+    .section-sub { color:var(--muted); font-size:1.05rem; max-width:540px; line-height:1.7; }
+
+    /* HOW IT WORKS STEPS */
+    .steps { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:24px; margin-top:48px; }
+    .step { text-align:center; padding:28px 20px; background:var(--surface); border:1px solid var(--border); border-radius:14px; }
+    .step-num { width:40px; height:40px; border-radius:50%; background:rgba(22,163,74,0.12); border:1px solid rgba(22,163,74,0.25); color:var(--accent-h); font-weight:800; font-size:1rem; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; }
+    .step h3 { font-size:0.9rem; font-weight:700; margin-bottom:8px; }
+    .step p { font-size:0.82rem; color:var(--muted); line-height:1.5; }
+
+    /* PAIN GRID */
+    .pain-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:20px; margin-top:48px; }
+    .pain-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:22px; }
+    .pain-icon { width:36px; height:36px; border-radius:9px; background:rgba(239,68,68,0.1); display:flex; align-items:center; justify-content:center; margin-bottom:14px; }
+    .pain-card h3 { font-size:0.92rem; font-weight:700; margin-bottom:7px; }
+    .pain-card p { font-size:0.83rem; color:var(--muted); line-height:1.6; }
+
+    /* PRICING */
+    .pricing-box { background:var(--surface); border:1px solid var(--border); border-radius:18px; padding:40px 36px; max-width:420px; margin:48px auto 0; text-align:center; }
+    .pricing-badge { display:inline-block; background:rgba(22,163,74,0.12); border:1px solid rgba(22,163,74,0.3); color:var(--accent-h); border-radius:20px; padding:4px 14px; font-size:0.78rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase; margin-bottom:20px; }
+    .pricing-amount { font-size:3rem; font-weight:900; letter-spacing:-0.03em; line-height:1; margin-bottom:6px; }
+    .pricing-amount span { font-size:1.1rem; font-weight:500; color:var(--muted); vertical-align:super; }
+    .pricing-period { font-size:0.85rem; color:var(--muted); margin-bottom:28px; }
+    .pricing-features { list-style:none; text-align:left; margin-bottom:30px; }
+    .pricing-features li { display:flex; align-items:center; gap:10px; padding:8px 0; font-size:0.88rem; border-bottom:1px solid var(--border); }
+    .pricing-features li:last-child { border-bottom:none; }
+    .check { color:var(--accent-h); font-size:1rem; flex-shrink:0; }
+
+    /* BOTTOM CTA */
+    .bottom-cta { background:var(--surface); border-top:1px solid var(--border); padding:80px 24px; text-align:center; }
+    .bottom-cta h2 { font-size:clamp(1.5rem,3.5vw,2.2rem); font-weight:800; line-height:1.2; letter-spacing:-0.02em; margin-bottom:14px; }
+    .bottom-cta p { color:var(--muted); margin-bottom:36px; }
+
+    footer { text-align:center; padding:28px 24px; font-size:0.8rem; color:var(--muted); border-top:1px solid var(--border); }
+
+    @media (max-width:600px) {
+      nav { padding:14px 20px; }
+      .hero { padding:60px 20px 50px; }
+      section { padding:60px 20px; }
+      .ba-grid { grid-template-columns:1fr; }
+      .pricing-box { padding:28px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="logo">
+    <div class="logo-icon">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+        <path d="M3 4h10M3 8h7M3 12h5" stroke="white" stroke-width="1.8" stroke-linecap="round"/>
+        <circle cx="13" cy="12" r="2" fill="white"/>
+      </svg>
+    </div>
+    PushLog
+  </a>
+  <a href="#waitlist" class="nav-cta">Get early access</a>
+</nav>
+
+<div class="hero">
+  <div class="hero-badge">✦ Early Access · $19/month</div>
+  <h1>Your changelog<br/><span class="accent-text">writes itself.</span><br/>Ship, merge, done.</h1>
+  <p class="hero-sub">Connect GitHub once. Every PR you merge becomes a polished changelog entry — automatically drafted by AI, ready to publish in one click.</p>
+
+  <form class="hero-form" action="https://agent-control-plane-w3m9.onrender.com/api/waitlist" method="POST">
+    <input type="email" name="email" placeholder="your@email.com" required />
+    <input type="hidden" name="source" value="pushlog" />
+    <button type="submit">Join the waitlist</button>
+  </form>
+  <p class="form-note">No spam. No credit card. Unsubscribe anytime.</p>
+  <div class="thank-you" id="thank-you">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" stroke="#22c55e" stroke-width="1.6"/><path d="M5.5 9l2.5 2.5 4.5-5" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    You're on the list! We'll be in touch soon.
+  </div>
+
+  <!-- Before/After mockup -->
+  <div class="ba-grid">
+    <div class="ba-card">
+      <div class="ba-label before">✕ Without PushLog</div>
+      <div class="changelog-empty">
+        "I know I should update the changelog but I keep forgetting…"<br/><br/>
+        Last entry: <em>3 months ago.</em><br/>Users think the product is abandoned.
+      </div>
+    </div>
+    <div class="ba-card">
+      <div class="ba-label after">✓ With PushLog</div>
+      <div class="changelog-entry">
+        <div class="entry-version">v2.4.1</div>
+        <div class="entry-date">Today · auto-drafted in 4s</div>
+        <div class="entry-item"><span class="entry-tag tag-new">NEW</span>Dark mode support across all pages</div>
+        <div class="entry-item"><span class="entry-tag tag-fix">FIX</span>CSV export no longer truncates long fields</div>
+        <div class="entry-item"><span class="entry-tag tag-imp">IMP</span>Dashboard loads 2× faster</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="providers-strip">
+  <p>Works with your stack</p>
+  <div class="provider-pills">
+    <span class="pill"><span class="pill-dot"></span>GitHub</span>
+    <span class="pill"><span class="pill-dot"></span>GitLab</span>
+    <span class="pill"><span class="pill-dot"></span>Bitbucket</span>
+    <span class="pill"><span class="pill-dot"></span>Embeddable widget</span>
+    <span class="pill"><span class="pill-dot"></span>Public changelog page</span>
+    <span class="pill"><span class="pill-dot"></span>RSS feed</span>
+  </div>
+</div>
+
+<section id="problem">
+  <div class="section-label">The Problem</div>
+  <h2 class="section-heading">Users churn silently<br/>when you don't ship visibly.</h2>
+  <p class="section-sub">You're shipping every week. Your changelog hasn't been updated in months. Users assume you've given up — and go find something that looks alive.</p>
+  <div class="pain-grid">
+    <div class="pain-card">
+      <div class="pain-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="8" stroke="#ef4444" stroke-width="1.6"/><path d="M10 6v4l3 3" stroke="#ef4444" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Writing changelogs takes time you don't have</h3>
+      <p>Between coding, customer calls, and firefighting, "update the changelog" never makes the cut. You know you should. You don't.</p>
+    </div>
+    <div class="pain-card">
+      <div class="pain-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M4 10h12M10 4l6 6-6 6" stroke="#ef4444" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <h3>A stale changelog signals an abandoned product</h3>
+      <p>Prospects check your changelog before buying. "Last update: 3 months ago" is a conversion killer — even if you shipped 40 commits last week.</p>
+    </div>
+    <div class="pain-card">
+      <div class="pain-icon">
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M10 3a7 7 0 100 14A7 7 0 0010 3z" stroke="#ef4444" stroke-width="1.6"/><path d="M7 8h6M7 12h4" stroke="#ef4444" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </div>
+      <h3>Support tickets for features you already built</h3>
+      <p>Users request things you shipped two sprints ago. They never knew. A changelog would have told them — but only if someone maintained it.</p>
+    </div>
+  </div>
+</section>
+
+<section id="how" style="background:var(--surface); border-top:1px solid var(--border); border-bottom:1px solid var(--border); max-width:100%; padding:80px 24px;">
+  <div style="max-width:900px; margin:0 auto;">
+    <div class="section-label">How It Works</div>
+    <h2 class="section-heading">Connect once.<br/>Never write another changelog entry.</h2>
+    <p class="section-sub">PushLog listens to your GitHub webhooks, reads your PR and commit messages, and drafts human-readable changelog entries automatically.</p>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Connect GitHub</h3>
+        <p>Install the PushLog GitHub App in 2 minutes. No code changes, no infrastructure.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Merge a PR</h3>
+        <p>Push a commit or merge a pull request as you normally would. PushLog picks it up automatically.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>AI drafts the entry</h3>
+        <p>GPT reads your commits and PR description. Seconds later you have a polished, categorized entry.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <h3>One-click publish</h3>
+        <p>Review, edit if you want, then publish. Your changelog page, widget, and RSS feed update instantly.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pricing">
+  <div class="section-label">Pricing</div>
+  <h2 class="section-heading">One low price. Everything included.</h2>
+  <p class="section-sub">No per-seat fees. No add-ons. One price that works whether you're a solo founder or a 20-person team.</p>
+  <div class="pricing-box">
+    <div class="pricing-badge">Early Access</div>
+    <div class="pricing-amount"><span>$</span>19</div>
+    <div class="pricing-period">per month · all features included</div>
+    <ul class="pricing-features">
+      <li><span class="check">✓</span>Unlimited GitHub repos</li>
+      <li><span class="check">✓</span>AI-drafted entries from every PR/commit</li>
+      <li><span class="check">✓</span>Public changelog page (yourproduct.pushlog.io)</li>
+      <li><span class="check">✓</span>Embeddable in-app widget</li>
+      <li><span class="check">✓</span>RSS + JSON feed</li>
+      <li><span class="check">✓</span>Custom domain</li>
+      <li><span class="check">✓</span>Edit drafts before publishing</li>
+    </ul>
+    <a href="#waitlist" class="nav-cta" style="display:block;text-align:center;padding:13px 24px;font-size:0.95rem;">Join waitlist — get 3 months free</a>
+  </div>
+</section>
+
+<div class="bottom-cta" id="waitlist">
+  <h2>Your users deserve to know<br/>what you've been building.</h2>
+  <p>Join the waitlist. Early access members get 3 months free.</p>
+  <form class="waitlist-form" id="waitlist-form" action="https://agent-control-plane-w3m9.onrender.com/api/waitlist" method="POST">
+    <input type="email" name="email" placeholder="your@email.com" required />
+    <input type="hidden" name="source" value="pushlog" />
+    <button type="submit">Join the waitlist</button>
+  </form>
+  <p class="form-note">No spam. No credit card. Unsubscribe anytime.</p>
+  <div class="thank-you" id="thank-you-bottom">
+    <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="8" stroke="#22c55e" stroke-width="1.6"/><path d="M5.5 9l2.5 2.5 4.5-5" stroke="#22c55e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    You're on the list! We'll be in touch soon.
+  </div>
+</div>
+
+<footer><p>© 2026 PushLog · Early Access</p></footer>
+
+<script>
+  document.querySelectorAll('form').forEach(function(form) {
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+      var btn = form.querySelector('button[type="submit"]');
+      btn.textContent = 'Joining…'; btn.disabled = true;
+      var email = (form.querySelector('input[type="email"]') || {}).value || '';
+      var source = (form.querySelector('input[name="source"]') || {}).value || 'pushlog';
+      try {
+        var res = await fetch(form.action, {
+          method: 'POST',
+          body: JSON.stringify({ email: email.trim(), source: source }),
+          headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' }
+        });
+        if (res.ok) {
+          form.style.display = 'none';
+          var ty = form.nextElementSibling;
+          while (ty && !ty.classList.contains('thank-you')) ty = ty.nextElementSibling;
+          if (!ty) ty = document.getElementById('thank-you');
+          if (ty) ty.style.display = 'flex';
+        } else { btn.textContent = 'Try again'; btn.disabled = false; }
+      } catch(e) { btn.textContent = 'Try again'; btn.disabled = false; }
+    });
+  });
+</script>
+</body>
+</html>
