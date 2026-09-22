@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Conventional Commits to User-Facing Changelog: The Complete Guide | PushLog</title>
+  <meta name="description" content="Learn how to turn conventional commits into a polished, user-facing product changelog. Tools, patterns, and automation workflows that actually ship." />
+  <link rel="canonical" href="https://lior-seats.github.io/pushlog-waitlist/conventional-commits-user-facing-changelog.html" />
+  <meta property="og:title" content="Conventional Commits to User-Facing Changelog: The Complete Guide" />
+  <meta property="og:description" content="Turn git commits into polished product release notes automatically. Tools, patterns, and CI workflows." />
+  <meta property="og:url" content="https://lior-seats.github.io/pushlog-waitlist/conventional-commits-user-facing-changelog.html" />
+  <meta property="og:type" content="article" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a1a; background: #fff; line-height: 1.7; }
+    header { background: #0f172a; color: #fff; padding: 14px 24px; display: flex; align-items: center; gap: 12px; }
+    header a { color: #a5f3fc; text-decoration: none; font-size: 1.1rem; font-weight: 700; }
+    header span { color: #64748b; font-size: 0.9rem; }
+    .container { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
+    h1 { font-size: 2rem; font-weight: 800; line-height: 1.2; margin-bottom: 16px; color: #0f172a; }
+    .meta { color: #64748b; font-size: 0.9rem; margin-bottom: 32px; }
+    h2 { font-size: 1.3rem; font-weight: 700; margin: 36px 0 12px; color: #0f172a; }
+    h3 { font-size: 1.1rem; font-weight: 600; margin: 24px 0 10px; color: #1e293b; }
+    p { margin-bottom: 16px; }
+    code { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 4px; padding: 2px 6px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 0.875rem; }
+    pre { background: #0f172a; color: #e2e8f0; border-radius: 8px; padding: 20px; overflow-x: auto; margin: 20px 0; font-size: 0.85rem; line-height: 1.6; }
+    pre code { background: none; border: none; padding: 0; color: inherit; font-size: inherit; }
+    ul, ol { margin: 12px 0 16px 24px; }
+    li { margin-bottom: 6px; }
+    .cta-box { background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%); color: #fff; border-radius: 12px; padding: 32px; margin: 40px 0; text-align: center; }
+    .cta-box h3 { font-size: 1.4rem; margin-bottom: 10px; }
+    .cta-box p { color: #bfdbfe; margin-bottom: 20px; }
+    .cta-btn { display: inline-block; background: #38bdf8; color: #0f172a; font-weight: 700; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-size: 1rem; }
+    blockquote { border-left: 4px solid #38bdf8; padding: 12px 20px; background: #f0f9ff; border-radius: 0 8px 8px 0; margin: 20px 0; color: #0c4a6e; }
+    .warning { background: #fef9c3; border-left: 4px solid #fbbf24; padding: 12px 20px; border-radius: 0 8px 8px 0; margin: 20px 0; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+    th { background: #f1f5f9; text-align: left; padding: 10px 14px; border: 1px solid #e2e8f0; font-weight: 600; }
+    td { padding: 10px 14px; border: 1px solid #e2e8f0; }
+    tr:nth-child(even) td { background: #f8fafc; }
+    footer { text-align: center; color: #94a3b8; font-size: 0.85rem; padding: 24px; border-top: 1px solid #e2e8f0; margin-top: 60px; }
+  </style>
+</head>
+<body>
+<header>
+  <a href="https://lior-seats.github.io/pushlog-waitlist/">PushLog</a>
+  <span>/ Blog</span>
+</header>
+
+<div class="container">
+  <h1>Conventional Commits to User-Facing Changelog: The Complete Guide</h1>
+  <p class="meta">September 22, 2026 · 9 min read</p>
+
+  <p>Conventional Commits solve the developer side of the changelog problem: structured, parseable commit messages. But structured commits alone don't give you a polished user-facing changelog. There's a gap between <code>feat(auth): add Google OAuth provider</code> and "New: Sign in with Google."</p>
+
+  <p>This guide covers the full pipeline — from writing conventional commits to publishing release notes that users actually read.</p>
+
+  <h2>The Conventional Commits Spec (Quick Reference)</h2>
+
+  <p>Format: <code>&lt;type&gt;[optional scope]: &lt;description&gt;</code></p>
+
+  <table>
+    <thead>
+      <tr><th>Type</th><th>User impact</th><th>Include in changelog?</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>feat</code></td><td>New capability</td><td>✅ Yes — New Features</td></tr>
+      <tr><td><code>fix</code></td><td>Bug resolved</td><td>✅ Yes — Bug Fixes</td></tr>
+      <tr><td><code>perf</code></td><td>Faster/cheaper</td><td>✅ Yes — Improvements</td></tr>
+      <tr><td><code>docs</code></td><td>Documentation</td><td>Maybe (if public API docs)</td></tr>
+      <tr><td><code>refactor</code></td><td>None visible</td><td>❌ No</td></tr>
+      <tr><td><code>test</code></td><td>None visible</td><td>❌ No</td></tr>
+      <tr><td><code>chore</code></td><td>None visible</td><td>❌ No</td></tr>
+      <tr><td><code>ci</code></td><td>None visible</td><td>❌ No</td></tr>
+      <tr><td><code>BREAKING CHANGE</code></td><td>Requires migration</td><td>✅ Always — prominently</td></tr>
+    </tbody>
+  </table>
+
+  <p>The key insight: <strong>most commits don't belong in a user-facing changelog.</strong> A typical sprint might have 40 commits, 6 of which are genuinely user-relevant. Good changelog automation filters aggressively.</p>
+
+  <h2>The Translation Problem</h2>
+
+  <p>Here's where most automated changelog tools fall short. They faithfully reproduce the commit message:</p>
+
+  <pre><code># What the tool produces:
+## Features
+- feat(auth): add Google OAuth provider
+
+## Bug Fixes  
+- fix(dashboard): resolve undefined reference on empty state
+- fix(billing): handle edge case in proration calculation</code></pre>
+
+  <p>This is technically correct but not user-facing. A real product changelog entry reads differently:</p>
+
+  <pre><code>## What's New in v2.4.0
+
+✨ **Sign in with Google** — You can now log in or create an account using your Google account. Look for the "Continue with Google" button on the login screen.
+
+🐛 **Dashboard no longer shows a blank screen** for new accounts with no data.
+
+🐛 **Billing: fixed incorrect proration** when upgrading plans mid-cycle.</code></pre>
+
+  <p>Getting from the first format to the second requires either manual editing or an additional transformation step.</p>
+
+  <h2>Tool Option 1: git-cliff</h2>
+  <p><a href="https://git-cliff.org/" rel="nofollow">git-cliff</a> is the most flexible changelog generator. It parses conventional commits, supports custom Tera templates, and works with any language.</p>
+
+  <pre><code># Install
+cargo install git-cliff
+# or: brew install git-cliff
+
+# Generate changelog from last tag to HEAD
+git cliff --latest --output CHANGELOG.md
+
+# Generate for a specific range
+git cliff v1.0.0..v1.1.0 --output CHANGELOG.md</code></pre>
+
+  <p>Custom template example (<code>cliff.toml</code>):</p>
+
+  <pre><code>[changelog]
+header = """
+# Changelog\n
+"""
+body = """
+{% if version %}\
+## {{ version | trim_start_matches(pat="v") }} ({{ timestamp | date(format="%Y-%m-%d") }})
+{% else %}\
+## Unreleased
+{% endif %}\
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | upper_first }}
+{% for commit in commits %}
+- {{ commit.message | upper_first }}\
+{% endfor %}
+{% endfor %}\n
+"""
+
+[git]
+conventional_commits = true
+filter_unconventional = true
+commit_parsers = [
+  { message = "^feat", group = "✨ New Features" },
+  { message = "^fix", group = "🐛 Bug Fixes" },
+  { message = "^perf", group = "⚡ Performance" },
+  { message = "^.*: add", group = "✨ New Features" },
+  { message = "^.*", skip = true },
+]</code></pre>
+
+  <h2>Tool Option 2: release-please (GitHub Actions)</h2>
+  <p>If you're on GitHub, <a href="https://github.com/googleapis/release-please" rel="nofollow">release-please</a> automates the entire release flow — not just the changelog. On every push to main, it maintains an open "Release PR" that accumulates changes. When you merge it, it creates the GitHub Release and bumps the version.</p>
+
+  <pre><code># .github/workflows/release-please.yml
+name: Release Please
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          release-type: node</code></pre>
+
+  <p>What it does automatically:</p>
+  <ul>
+    <li>Parses conventional commits on every push to main</li>
+    <li>Maintains an open PR: "chore: release v1.4.0" with the accumulated changelog</li>
+    <li>On merge, creates the GitHub Release with the changelog body</li>
+    <li>Bumps <code>package.json</code> version following semver from commit types</li>
+  </ul>
+
+  <h2>The User-Facing Gap</h2>
+
+  <p>Both git-cliff and release-please produce developer-readable changelogs. They're great for GitHub Releases. But they don't solve:</p>
+
+  <ul>
+    <li><strong>In-app "What's New" notifications</strong> — showing users new features inside the product itself</li>
+    <li><strong>Email digests</strong> — sending a formatted release summary to your customer list</li>
+    <li><strong>Public changelog page</strong> — a browsable, SEO-indexed /changelog on your site</li>
+    <li><strong>Slack/Teams announcements</strong> — notifying internal teams or customer communities</li>
+    <li><strong>Non-technical language</strong> — translating "fix(billing): handle proration edge case" into "Fixed: billing amounts now calculate correctly when upgrading mid-cycle"</li>
+  </ul>
+
+  <div class="warning">
+    <strong>The real gap:</strong> Automated tools get the raw material right. The last mile — publishing polished notes to users across every relevant channel automatically on every release — still requires custom glue code for most teams.
+  </div>
+
+  <h2>Building the User-Facing Layer</h2>
+
+  <h3>Option A: GitHub Actions webhook pipeline</h3>
+  <pre><code>name: Publish Changelog
+on:
+  release:
+    types: [published]
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post to Slack
+        uses: slackapi/slack-github-action@v1
+        with:
+          payload: |
+            {
+              "text": "🚀 *${{ github.event.release.name }}* released!\n${{ github.event.release.body }}"
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Send email newsletter
+        run: |
+          curl -X POST https://api.resend.com/emails \
+            -H "Authorization: Bearer ${{ secrets.RESEND_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "from": "releases@yourapp.com",
+              "to": ["users@yourapp.com"],
+              "subject": "What'\''s new in ${{ github.event.release.name }}",
+              "html": "${{ github.event.release.body }}"
+            }'</code></pre>
+
+  <h3>Option B: Dedicated changelog product</h3>
+  <p>For teams that want a polished hosted changelog page, in-app widget, and multi-channel distribution without building the pipeline themselves, dedicated products handle this end-to-end.</p>
+
+  <div class="cta-box">
+    <h3>Close the gap automatically</h3>
+    <p>PushLog connects to your GitHub repos, translates conventional commits into user-readable notes on every PR merge, and publishes them to your changelog page, in-app widget, Slack, and email — with zero manual steps per release.</p>
+    <a href="https://lior-seats.github.io/pushlog-waitlist/" class="cta-btn">Join the PushLog waitlist →</a>
+  </div>
+
+  <h2>Common Pitfalls</h2>
+
+  <ul>
+    <li><strong>Forgetting breaking changes</strong> — always surface <code>BREAKING CHANGE</code> commits prominently, regardless of filtering rules</li>
+    <li><strong>Scope overload</strong> — scopes like <code>feat(auth):</code> are useful for filtering but remove them from user-facing notes (users don't think in modules)</li>
+    <li><strong>Including internal commits</strong> — <code>chore</code>, <code>test</code>, <code>ci</code> commits add noise; filter them by default</li>
+    <li><strong>Stale GitHub Releases</strong> — if your release automation runs but nobody checks GitHub Releases, the changelog exists but users never see it</li>
+    <li><strong>Assuming everyone uses GitHub</strong> — in-app notifications and email reach users who never visit your GitHub repo</li>
+  </ul>
+
+  <h2>Summary</h2>
+  <p>Conventional Commits give you the structured input that makes changelog automation tractable. From there, the pipeline looks like:</p>
+  <ol>
+    <li>Enforce conventional commits (commitlint + husky, or PR title rules)</li>
+    <li>Parse and filter on release (git-cliff, release-please, or custom script)</li>
+    <li>Translate technical descriptions into user language (manual edit, or LLM-assisted)</li>
+    <li>Publish to where users actually are: changelog page, in-app, email, Slack</li>
+  </ol>
+  <p>Steps 1–2 are solved. Steps 3–4 are where most teams still have manual work. That's the automation gap worth closing.</p>
+</div>
+
+<footer>
+  <p>© 2026 PushLog. <a href="https://lior-seats.github.io/pushlog-waitlist/">Back to PushLog waitlist</a></p>
+</footer>
+
+<script>
+  (function(){
+    var p = 'pushlog-conventional-blog';
+    fetch('https://agent-control-plane-w3m9.onrender.com/api/hit?page=' + encodeURIComponent(p));
+  })();
+</script>
+</body>
+</html>

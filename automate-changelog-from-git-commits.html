@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>How to Automate Your Changelog from Git Commits | PushLog</title>
+  <meta name="description" content="Stop writing changelogs by hand. Learn how to automatically generate user-facing release notes from your git commit history using conventional commits or keyword heuristics." />
+  <link rel="canonical" href="https://lior-seats.github.io/pushlog-waitlist/automate-changelog-from-git-commits.html" />
+  <meta property="og:title" content="How to Automate Your Changelog from Git Commits" />
+  <meta property="og:description" content="Stop writing changelogs by hand. Learn the fastest way to turn git log output into polished user-facing release notes." />
+  <meta property="og:url" content="https://lior-seats.github.io/pushlog-waitlist/automate-changelog-from-git-commits.html" />
+  <meta property="og:type" content="article" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; color: #1a1a1a; background: #fff; line-height: 1.7; }
+    header { background: #0f172a; color: #fff; padding: 14px 24px; display: flex; align-items: center; gap: 12px; }
+    header a { color: #a5f3fc; text-decoration: none; font-size: 1.1rem; font-weight: 700; }
+    header span { color: #64748b; font-size: 0.9rem; }
+    .container { max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; }
+    h1 { font-size: 2rem; font-weight: 800; line-height: 1.2; margin-bottom: 16px; color: #0f172a; }
+    .meta { color: #64748b; font-size: 0.9rem; margin-bottom: 32px; }
+    h2 { font-size: 1.3rem; font-weight: 700; margin: 36px 0 12px; color: #0f172a; }
+    p { margin-bottom: 16px; }
+    code { background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 4px; padding: 2px 6px; font-family: 'Fira Code', 'Courier New', monospace; font-size: 0.875rem; }
+    pre { background: #0f172a; color: #e2e8f0; border-radius: 8px; padding: 20px; overflow-x: auto; margin: 20px 0; font-size: 0.85rem; line-height: 1.6; }
+    pre code { background: none; border: none; padding: 0; color: inherit; font-size: inherit; }
+    ul, ol { margin: 12px 0 16px 24px; }
+    li { margin-bottom: 6px; }
+    .cta-box { background: linear-gradient(135deg, #0f172a 0%, #1e40af 100%); color: #fff; border-radius: 12px; padding: 32px; margin: 40px 0; text-align: center; }
+    .cta-box h3 { font-size: 1.4rem; margin-bottom: 10px; }
+    .cta-box p { color: #bfdbfe; margin-bottom: 20px; }
+    .cta-btn { display: inline-block; background: #38bdf8; color: #0f172a; font-weight: 700; padding: 12px 28px; border-radius: 8px; text-decoration: none; font-size: 1rem; }
+    .cta-btn:hover { background: #7dd3fc; }
+    blockquote { border-left: 4px solid #38bdf8; padding: 12px 20px; background: #f0f9ff; border-radius: 0 8px 8px 0; margin: 20px 0; color: #0c4a6e; }
+    table { width: 100%; border-collapse: collapse; margin: 20px 0; font-size: 0.9rem; }
+    th { background: #f1f5f9; text-align: left; padding: 10px 14px; border: 1px solid #e2e8f0; font-weight: 600; }
+    td { padding: 10px 14px; border: 1px solid #e2e8f0; }
+    tr:nth-child(even) td { background: #f8fafc; }
+    footer { text-align: center; color: #94a3b8; font-size: 0.85rem; padding: 24px; border-top: 1px solid #e2e8f0; margin-top: 60px; }
+  </style>
+</head>
+<body>
+<header>
+  <a href="https://lior-seats.github.io/pushlog-waitlist/">PushLog</a>
+  <span>/ Blog</span>
+</header>
+
+<div class="container">
+  <h1>How to Automate Your Changelog from Git Commits</h1>
+  <p class="meta">September 22, 2026 · 8 min read</p>
+
+  <p>Writing changelogs manually is one of those tasks that sounds simple but consistently gets skipped. The result: users have no idea what changed between releases, and support tickets pile up asking about "the new version."</p>
+
+  <p>This guide covers the practical ways to generate user-facing release notes directly from your git commit history — from simple scripts to fully automated pipelines.</p>
+
+  <h2>Why Changelogs Get Skipped</h2>
+  <p>Most developers intend to write changelogs. Here's why it doesn't happen:</p>
+  <ul>
+    <li><strong>Context switching cost</strong> — changelogs require translating technical changes into user language, which takes focused effort right when you're trying to ship</li>
+    <li><strong>No clear audience</strong> — internal teams want technical details; end-users want to know if their feature shipped</li>
+    <li><strong>Timing</strong> — the PR author knows the context; by release day, they've forgotten half of it</li>
+    <li><strong>Inconsistency</strong> — every developer writes in a different style, making changelogs feel fragmented</li>
+  </ul>
+
+  <p>Automation doesn't solve all of these, but it eliminates the blank-page problem and creates a forcing function.</p>
+
+  <h2>Method 1: The Raw git log Approach</h2>
+  <p>The simplest starting point is piping <code>git log</code> output into a text file:</p>
+
+  <pre><code>git log --pretty=format:"- %s" v1.2.0..v1.3.0 > CHANGELOG.md</code></pre>
+
+  <p>This gives you a flat list of commit messages. It's a baseline, not a finished changelog. Raw commit messages like <code>"fix typo in auth service"</code> or <code>"wip: dashboard refactor"</code> are meaningless to end-users.</p>
+
+  <p>The improvement requires two things: <strong>structured commit messages</strong> and <strong>a parser that knows what users care about</strong>.</p>
+
+  <h2>Method 2: Conventional Commits</h2>
+  <p><a href="https://www.conventionalcommits.org/" rel="nofollow">Conventional Commits</a> is a lightweight spec that prefixes commit messages with a type:</p>
+
+  <pre><code>feat: add OAuth login with Google
+fix: resolve race condition in payment processing
+docs: update API authentication guide
+chore: upgrade Node.js to v20
+refactor: simplify database connection pooling</code></pre>
+
+  <p>With this structure, automation becomes straightforward:</p>
+  <ul>
+    <li><code>feat:</code> → "✨ New Features"</li>
+    <li><code>fix:</code> → "🐛 Bug Fixes"</li>
+    <li><code>perf:</code> → "⚡ Performance Improvements"</li>
+    <li>Everything else → either filtered out or bucketed as "🔧 Internal Changes"</li>
+  </ul>
+
+  <h3>Tools that parse conventional commits automatically</h3>
+
+  <table>
+    <thead>
+      <tr><th>Tool</th><th>What it does</th><th>Best for</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>conventional-changelog-cli</td><td>Generates CHANGELOG.md from conventional commits</td><td>Node.js projects</td></tr>
+      <tr><td>git-cliff</td><td>Rust-based, highly configurable, fast</td><td>Any language</td></tr>
+      <tr><td>release-please</td><td>Creates GitHub PRs to bump versions + changelog</td><td>GitHub Actions workflows</td></tr>
+      <tr><td>semantic-release</td><td>Full automated release pipeline</td><td>Mature CI/CD setups</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Method 3: Keyword Heuristics (for messy commit history)</h2>
+  <p>Most real-world repos don't use conventional commits. If your history looks like this:</p>
+  <pre><code>Refactored the auth middleware
+Added dark mode toggle
+Fixed the bug where users got logged out
+Update README
+Merge branch 'feature/billing'</code></pre>
+
+  <p>You need keyword-based heuristics to classify commits:</p>
+
+  <pre><code>const FEATURE_KEYWORDS = ['add', 'added', 'new', 'implement', 'introduce', 'support'];
+const FIX_KEYWORDS = ['fix', 'fixed', 'bug', 'resolve', 'patch', 'correct'];
+const IMPROVEMENT_KEYWORDS = ['improve', 'update', 'refactor', 'optimize', 'enhance'];
+
+function classifyCommit(message) {
+  const lower = message.toLowerCase();
+  if (FEATURE_KEYWORDS.some(k => lower.includes(k))) return 'feature';
+  if (FIX_KEYWORDS.some(k => lower.includes(k))) return 'fix';
+  if (IMPROVEMENT_KEYWORDS.some(k => lower.includes(k))) return 'improvement';
+  return 'other';
+}</code></pre>
+
+  <p>This isn't perfect — but it transforms a wall of commit messages into something roughly useful in seconds.</p>
+
+  <h2>Method 4: AI-Assisted Summarization</h2>
+  <p>The latest approach uses LLMs to translate raw commits into plain-English user-facing notes. Given a batch of commits, a model can:</p>
+  <ul>
+    <li>Merge related commits into a single changelog entry</li>
+    <li>Drop internal/chore commits that users don't care about</li>
+    <li>Rephrase technical changes in user-facing language</li>
+    <li>Add appropriate emojis or section headers</li>
+  </ul>
+
+  <p>A basic prompt:</p>
+  <pre><code>Given these git commits:
+  ${commits.join('\n')}
+
+Convert them into user-facing changelog entries.
+Group related changes. Skip internal changes (chore, ci, test, docs).
+Write in plain English as if addressing the end user.
+Format as markdown with sections: New Features, Bug Fixes, Improvements.</code></pre>
+
+  <blockquote>
+    The limitation: this works well for structured inputs, less well for one-word commits like "wip" or "fix." Clean inputs produce clean outputs.
+  </blockquote>
+
+  <h2>Automating the Release Workflow in GitHub Actions</h2>
+  <p>The most robust setup runs changelog generation automatically on every PR merge to main:</p>
+
+  <pre><code>name: Generate Changelog
+on:
+  push:
+    branches: [main]
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        run: |
+          git log --pretty=format:"%s" $(git describe --tags --abbrev=0)..HEAD \
+            > /tmp/commits.txt
+          # pipe to your parser here
+
+      - name: Commit changelog
+        run: |
+          git config user.email "bot@example.com"
+          git config user.name "Changelog Bot"
+          git add CHANGELOG.md
+          git commit -m "chore: update changelog [skip ci]" || true
+          git push</code></pre>
+
+  <h2>Publishing to Users</h2>
+  <p>The generated changelog is only valuable if users see it. Common distribution channels:</p>
+  <ul>
+    <li><strong>GitHub Releases</strong> — auto-create a release with the changelog body</li>
+    <li><strong>Public changelog page</strong> — a /changelog route on your marketing site or app</li>
+    <li><strong>Embeddable widget</strong> — a floating "What's new" button in your product UI</li>
+    <li><strong>Slack/email digest</strong> — push to team channels or external users on each release</li>
+  </ul>
+
+  <p>Many teams have the git integration sorted but struggle with the last-mile: getting the generated notes in front of users automatically on every release.</p>
+
+  <div class="cta-box">
+    <h3>Want this fully automated?</h3>
+    <p>PushLog connects to your GitHub repos, generates a polished changelog entry on every PR merge, and publishes it automatically — to a hosted changelog page, Slack, email, or an embeddable in-app widget. Zero manual steps.</p>
+    <a href="https://lior-seats.github.io/pushlog-waitlist/" class="cta-btn">Join the PushLog waitlist →</a>
+  </div>
+
+  <h2>Quick Decision Guide</h2>
+  <table>
+    <thead>
+      <tr><th>Your situation</th><th>Best approach</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>New project, can enforce standards</td><td>Conventional Commits + git-cliff</td></tr>
+      <tr><td>Existing project, messy history</td><td>Keyword heuristics or AI summarization</td></tr>
+      <tr><td>GitHub-hosted, want automation</td><td>release-please or semantic-release</td></tr>
+      <tr><td>Need user-facing page + notifications</td><td>Dedicated changelog product</td></tr>
+    </tbody>
+  </table>
+
+  <h2>Summary</h2>
+  <p>Automating changelogs from git commits is achievable at any codebase maturity level. The core steps:</p>
+  <ol>
+    <li>Get your commits into a parseable format (conventional commits preferred, keyword heuristics as fallback)</li>
+    <li>Classify and filter commits by user relevance</li>
+    <li>Generate human-readable entries — or use an LLM for the messy cases</li>
+    <li>Publish automatically on each release to wherever users will see it</li>
+  </ol>
+  <p>The tooling for steps 1–3 is mature. The gap most teams face is step 4: getting polished notes in front of users without manual work on every release.</p>
+</div>
+
+<footer>
+  <p>© 2026 PushLog. <a href="https://lior-seats.github.io/pushlog-waitlist/">Back to PushLog waitlist</a></p>
+</footer>
+
+<script>
+  (function(){
+    var p = 'pushlog-changelog-blog';
+    fetch('https://agent-control-plane-w3m9.onrender.com/api/hit?page=' + encodeURIComponent(p));
+  })();
+</script>
+</body>
+</html>
